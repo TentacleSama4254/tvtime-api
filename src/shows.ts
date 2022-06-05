@@ -34,6 +34,39 @@ export function shows() {
     })
 }
 
+export function recent() {
+    const listShows: BasicShowInfo[] = []
+
+    return new Promise<BasicShowInfo[]>((resolve, reject) => {
+        if (!util.isLogin()) {
+            reject('User no login')
+            return
+        }
+        const userId = util.getUser()
+
+        util.get(`/en/user/${userId}/profile`)
+            .then((resp: any) => {
+                const bodyParse = cheerio.load(resp.body)
+
+                bodyParse('#recently-watched-shows li.first-loaded').each((index, item) => {
+                    const $ = cheerio.load(item)
+                    
+                    const linkSerie = $('div.poster-details a')
+                    const imgSerie = $('div.image-crop img')
+
+                    listShows.push({
+                        id: linkSerie.attr('href')?.split('/')[3]!,
+                        name: linkSerie.text().trim(),
+                        img: imgSerie.attr('src')!
+                    })
+                })
+
+                resolve(listShows)
+            })
+            .catch(reject)
+    })
+}
+
 export function show(serieId: string) {
     let infoShows: ShowInfo
     return new Promise<ShowInfo>((resolve, reject) => {
